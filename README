@@ -1,3 +1,9 @@
+Note
+====
+
+This repository is a fork of https://github.com/lkrg-org/lkrg for specific modifications.
+Please refer to the upstream lkrg repository https://github.com/lkrg-org/lkrg for the latest version and upstream updates.
+
 Linux Kernel Runtime Guard (LKRG)
 =================================
 
