@@ -646,6 +646,11 @@ static int __init p_lkrg_register(void) {
    p_register_notifiers();
    p_init_page_attr();
 
+   /* Initialize the TOPMON alert shared-memory channel. */
+   p_ret = lkrg_topmon_init();
+   if (p_ret != P_LKRG_SUCCESS)
+      goto p_main_error;
+
    p_print_log(P_LOG_ALIVE, "LKRG initialized successfully");
 
    p_ret = P_LKRG_SUCCESS;

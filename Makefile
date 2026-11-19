@@ -101,6 +101,7 @@ $(TARGET)-objs += src/modules/ksyms/p_resolve_ksym.o \
                   src/modules/exploit_detection/syscalls/p_scm_send/p_scm_send.o \
                   src/modules/exploit_detection/p_selinux_state.o \
                   src/modules/exploit_detection/p_exploit_detection.o \
+                  src/modules/lkrg-topmon/lkrg_topmon.o \
                   src/p_lkrg_main.o
 
 

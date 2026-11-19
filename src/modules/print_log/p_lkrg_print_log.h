@@ -1,4 +1,12 @@
 /*
+ * File: lkrg/src/modules/print_log/p_lkrg_print_log.h
+ * Overview: LKRG logging macros and TOPMON alert forwarding.
+ * Functions:
+ *   p_print_log(): Format LKRG logs and forward alert-level events.
+ *   p_panic(): Report a fatal alert and panic.
+ */
+
+/*
  * pi3's Linux kernel Runtime Guard
  *
  * Component:
@@ -17,6 +25,18 @@
 
 #ifndef P_LKRG_PRINT_LOG_H
 #define P_LKRG_PRINT_LOG_H
+
+#include "../lkrg-topmon/lkrg_topmon.h"
+
+/*
+ * Include the header that defines ATTACK_TYPE_EXPLOIT,
+ * ATTACK_TYPE_INTEGRITY, and struct lkrg_alert_info.
+ *
+ * Update the prototype to match the new definition in lkrg_topmon.c.
+ * It now accepts attack type, address, and a message string.
+ */
+extern void lkrg_topmon_alert(uint32_t type, uint64_t addr,
+                                const char *msg, uint64_t t0_alert_start_cntpct);
 
 #include "../net/net.h"
 
@@ -103,10 +123,27 @@
 #define p_print_log(p_level, p_fmt, p_args...)                                             \
 ({                                                                                         \
    int p_print_ret = 0;                                                                    \
+   uint64_t t0_alert_start_cntpct;                                                          \
                                                                                            \
-   if ((p_level) == P_LOG_ALERT)                                                           \
+   /* Trigger for WATCH and ALERT to notify TOPPERS (TEE) via Shared Memory */             \
+   /* if ((p_level) == P_LOG_ALERT || (p_level) == P_LOG_WATCH) { */                       \
+   t0_alert_start_cntpct = 0;                                                            \
+   if ((p_level) == P_LOG_ALERT) {                                                         \
+       uint32_t p_alert_type = ATTACK_TYPE_EXPLOIT;                                       \
+       t0_alert_start_cntpct = lkrg_topmon_read_counter();                                \
+                                                                                           \
+       /* 1. Format the message for the shared memory buffer */                             \
+       char p_buf[128];                                                                     \
+       snprintf(p_buf, sizeof(p_buf), p_fmt, ## p_args);                                    \
+                                                                                           \
+       /* 2. Send the detailed alert to TOPPERS/FMP3 */                                     \
+       /* target_addr is set to 0 here; specific addresses can be hooked in checkers */     \
+       lkrg_topmon_alert(p_alert_type, 0, p_buf, t0_alert_start_cntpct);                 \
+   }                                                                                       \
+                                                                                           \
+   if ((p_level) == P_LOG_ALERT) {                                                         \
       p_print_ret = printk(KERN_CRIT    P_LKRG_SIGNATURE "ALERT: " p_fmt "\n", ## p_args); \
-   else if (P_CTRL(p_log_level) >= ((p_level) & 7))                                        \
+   } else if (P_CTRL(p_log_level) >= ((p_level) & 7))                                      \
    switch (p_level) {                                                                      \
    default: /* Pacify clang warning about no case P_LOG_ALERT, which we handle above */    \
       break;                                                                               \
@@ -178,3 +215,7 @@
 #endif
 
 #endif
+
+/*
+ * End of File: lkrg/src/modules/print_log/p_lkrg_print_log.h
+ */
